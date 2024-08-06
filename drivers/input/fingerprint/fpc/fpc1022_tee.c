@@ -222,6 +222,8 @@ static int hw_reset(struct fpc1022_data *fpc1022)
 	pinctrl_select_state(fpc1022->pinctrl, fpc1022->st_rst_h);
 	usleep_range(FPC1022_RESET_HIGH1_US, FPC1022_RESET_HIGH1_US + 100);
 
+	dev_info(dev, "IRQ after reset %d\n", GPIO_GET(fpc1022->irq_gpio));
+
 	return 0;
 }
 
@@ -231,6 +233,9 @@ static ssize_t hw_reset_set(struct device *dev,
 {
 	int ret;
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
+	dev_dbg(fpc1022->dev, "why should we set clocks here? i refuse,%s\n",
+						__func__);
+	dev_dbg(fpc1022->dev, " buff is %d, %s\n", *buf, __func__);
 
 	if (!strncmp(buf, "reset", strlen("reset")))
 		ret = hw_reset(fpc1022);
@@ -301,12 +306,18 @@ static ssize_t clk_enable_set(struct device *dev,
 		//update spi clk
 		if (*buf == 49)
 			mt_spi_enable_master_clk(fpc1022->spi);
+			dev_dbg(fpc1022->dev, " enable spi clk %s\n", __func__);
 
 		if (*buf == 48)
 			mt_spi_disable_master_clk(fpc1022->spi);
+			dev_dbg(fpc1022->dev, " disable spi clk %s\n", __func__);
+
+			dev_dbg(fpc1022->dev, " spi clk end success%s\n", __func__);
 			return 1;
-	} else
-		return 0;
+	} else {
+		dev_err(fpc1022->dev, " spi clk NULL%s\n", __func__);
+		return 1;
+	}
 }
 
 static DEVICE_ATTR(clk_enable, 0200, NULL, clk_enable_set);
@@ -332,6 +343,7 @@ static ssize_t irq_ack(struct device *device,
 		       const char *buffer, size_t count)
 {
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(device);
+	dev_dbg(fpc1022->dev, "%s\n", __func__);
 	return count;
 }
 
